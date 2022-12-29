@@ -5,9 +5,10 @@ import ca.l5.expandingdev.jsgf.KleeneStar;
 import ca.l5.expandingdev.jsgf.OptionalGrouping;
 import ca.l5.expandingdev.jsgf.PlusOperator;
 import ca.l5.expandingdev.jsgf.RequiredGrouping;
-import ca.l5.expandingdev.jsgf.Rule;
 import ca.l5.expandingdev.jsgf.Sequence;
+import ca.l5.expandingdev.jsgf.Slot;
 import ca.l5.expandingdev.jsgf.Tag;
+import ca.l5.expandingdev.jsgf.TemplateSubMatched;
 import ca.l5.expandingdev.jsgf.Token;
 import ca.l5.expandingdev.jsgf.Wildcard;
 
@@ -25,11 +26,166 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-/**
- * @Description TODO
- * @Author by lidc2
- */
+
 public class JSGFTest3 {	
+    public static void main(String[] args) throws IOException {
+        long time1 = System.currentTimeMillis();
+        Grammar testGram = Grammar.parseGrammarFromString(readfile("src/main/test/G1新模板.jsgf"));
+        long time2 = System.currentTimeMillis();
+        System.out.println("加载模板文件耗时："+(time2-time1)+"ms");
+        System.out.println("grammar中共有"+testGram.getRules().size()+"条rule");
+        Grammar.ahoCor_pre();
+        Grammar.key2IndexMap = loadKeyWord2IndexFile();
+
+        /*
+		//这里绘制解析出来的语法树
+		List<Rule> rules=testGram.getRules();
+		for (int i=0;i<rules.size();i+=1) {
+			//printTreeHorizontal(rules.get(i).getChildExpansion());
+		}*/
+		/*
+        String testQuery = "我 实 在 太 热 了";
+        Pair<List, List> return_result = testGram.getMatchingRule(testQuery);
+        List<Rule> ruleList = return_result.getFirst();
+        List<List<Slot>> slotList = return_result.getSecond();
+        if(ruleList!=null && ruleList.size()>0){
+            for(Rule rule:ruleList){
+                System.out.println(rule.getRuleString());
+            }
+        }else{
+            System.out.println("未命中任何rule");
+        }
+        if(slotList!=null && slotList.size()>0){
+            for(List<Slot> slotl:slotList){
+            	for(Slot slot:slotl){
+                    System.out.println(slot.getSlot());      		
+            	}
+            }
+        }else{
+            System.out.println("没有槽位信息");
+        }
+
+        //Rule rule1 = testGram.getRules().get(0);
+        //System.out.println(rule1.getRuleString());
+        //System.out.println(rule1.getChildExpansion().getString());
+		
+
+        /*try {
+			Thread.sleep(67000);//为了等待VisualVM的连接，对于0.1数据，需要等68秒。0.25数据，需要等65秒。0.5数据，需要等67秒,1数据需要等待67秒
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+        
+        
+        long[] timearr=new long[11];
+        String[] sentences=readfile("src/main/test/sentence_test新模板.txt").split("\n");
+        String[] t= new String[2];
+        String[] s= new String[sentences.length];
+        for(int i=0;i<sentences.length;i++) {
+            t=sentences[i].split(":");
+            s[i]=t[0];
+        }
+        System.out.println("开始匹配");
+        long time11 = System.currentTimeMillis();
+        int num = 0;
+        //循环测试文件里的句子
+        for(int i=0;i<sentences.length;i++) {
+        	System.out.println(s[i]);
+        	List<TemplateSubMatched> return_results = testGram.getMatchingRule(s[i]);
+        	if(return_results != null && return_results.size()>0){
+                for(TemplateSubMatched ts:return_results){
+                	String rule = ts.getUtterance();
+                    List<Slot> slots = ts.getSlots();
+                    System.out.println(rule+" "+slots);
+                }
+                num+=1;
+            }else{
+            	System.out.println(s[i]);//打印匹配失败的原句
+            }
+            if (i%100==0){
+                long timet = System.currentTimeMillis();
+                timearr[i/100]=timet;
+            }
+        }
+		
+        System.out.println("匹配结束");
+        long time22 = System.currentTimeMillis();
+        System.out.println("执行了："+(int) ((time22 - time11))+"毫秒！");
+        System.out.println("命中："+num);
+
+        for (int i=0;i<timearr.length;i+=1) {
+            System.out.println("第"+(i*100+1)+"条时执行了："+((int)(timearr[i]-time11))+"毫秒！");
+        }
+
+        /*try {
+			Thread.sleep(67000);//为了等待VisualVM的连接，对于0.1数据，需要等68秒。0.25数据，需要等65秒。0.5数据，需要等67秒,1数据需要等待67秒
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/       
+    }
+    
+    public static String readfile(String file) throws IOException {//读文件，所有内容拼成一个字符串
+        BufferedReader in = new BufferedReader(new FileReader(file));
+        String str;
+        //String re = "";
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((str = in.readLine()) != null) {
+
+           /* re += str;
+            re += "\n";*/
+            stringBuilder.append(str);
+            stringBuilder.append("\n");
+        }
+        in.close();
+        return stringBuilder.toString();
+    }
+
+    
+    public static Map<String, Set<Integer>> loadKeyWord2IndexFile(){
+        String ahoCorFilePath = "src/main/test/G1副本_key2index.txt";
+        SortedMap<String, Set<Integer>> key2IndexMap = new TreeMap();
+        String line;
+        try {
+            InputStreamReader isr = new InputStreamReader(new FileInputStream(ahoCorFilePath), StandardCharsets.UTF_8);
+            BufferedReader br = new BufferedReader(isr);
+            while ((line = br.readLine()) != null) {
+                Set<Integer> indexSet = new HashSet<>();
+                // 用英文冒号隔开，每个index用英文逗号隔开
+                String[] keywordAndIndex = line.split(":");
+                String key = keywordAndIndex[0];
+                String indexListStr = keywordAndIndex[1];
+                String[] indexArray = indexListStr.split(",");
+                for(String s:indexArray){
+                    if(s!=null&&isNumeric(s)){
+                        int index = Integer.parseInt(s);
+                        indexSet.add(index);
+                    }
+                }
+                key2IndexMap.put(key, indexSet);
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return key2IndexMap;
+    }
+
+    /**
+     * 判断字符串是否为数字
+     * @param str
+     * @return
+     */
+    public static boolean isNumeric(String str) {
+        for (int i = str.length(); --i >= 0; ) {
+            if (!Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     public static String traversePreOrder(Expansion root) throws UnsupportedEncodingException {//root必不为空
     	StringBuilder sb = new StringBuilder();
         String pointerRight = "└──";
@@ -134,150 +290,4 @@ public class JSGFTest3 {
         System.out.print(traversePreOrder(root));
     }
     
-    public static String readfile(String file) throws IOException {//读文件，所有内容拼成一个字符串
-        BufferedReader in = new BufferedReader(new FileReader(file));
-        String str;
-        //String re = "";
-        StringBuilder stringBuilder = new StringBuilder();
-        while ((str = in.readLine()) != null) {
-
-           /* re += str;
-            re += "\n";*/
-            stringBuilder.append(str);
-            stringBuilder.append("\n");
-        }
-        in.close();
-        return stringBuilder.toString();
-    }
-
-    public static void main(String[] args) throws IOException {
-        long time1 = System.currentTimeMillis();
-        Grammar testGram = Grammar.parseGrammarFromString(readfile("src/main/test/G1副本.jsgf"));
-        long time2 = System.currentTimeMillis();
-        System.out.println("加载模板文件耗时："+(time2-time1)+"ms");
-        System.out.println("grammar中共有"+testGram.getRules().size()+"条rule");
-        Grammar.ahoCor_pre();
-        Grammar.key2IndexMap = loadKeyWord2IndexFile();
-
-        /*
-		//这里绘制解析出来的语法树
-		List<Rule> rules=testGram.getRules();
-		for (int i=0;i<rules.size();i+=1) {
-			//printTreeHorizontal(rules.get(i).getChildExpansion());
-		}
-		
-        String testQuery = "开 额 反 馈 应 用";
-        List<Rule> ruleList = testGram.getMatchingRule(testQuery);
-        if(ruleList!=null&&ruleList.size()>0){
-            for(Rule rule:ruleList){
-                System.out.println(rule.getRuleString());
-            }
-        }else{
-            System.out.println("未命中任何rule");
-        }
-
-        //Rule rule1 = testGram.getRules().get(0);
-        //System.out.println(rule1.getRuleString());
-        //System.out.println(rule1.getChildExpansion().getString());
-		
-
-        /*try {
-			Thread.sleep(67000);//为了等待VisualVM的连接，对于0.1数据，需要等68秒。0.25数据，需要等65秒。0.5数据，需要等67秒,1数据需要等待67秒
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-        
-        
-        long[] timearr=new long[11];
-        String[] sentences=readfile("src/main/test/sentence_test0排序.txt").split("\n");
-        String[] t= new String[2];
-        String[] s= new String[sentences.length];
-        for(int i=0;i<sentences.length;i++) {
-            t=sentences[i].split(":");
-            s[i]=t[0];
-        }
-        System.out.println("开始匹配");
-        long time11 = System.currentTimeMillis();
-        int num = 0;
-        //循环测试文件里的句子
-        for(int i=0;i<sentences.length;i++) {
-            testGram.clear_result();
-            List<Rule> tmp=testGram.getMatchingRule(s[i]);
-            if (i%100==0){
-                long timet = System.currentTimeMillis();
-                timearr[i/100]=timet;
-            }
-            if (tmp != null){
-                for (int j=0;j<tmp.size();j+=1) {
-                    //System.out.println(s[i]);//打印匹配成功的原句
-                    //System.out.println(tmp.get(j).name);//打印domain和intent
-                    //System.out.println(tmp.get(j).getChildExpansion().getString());
-                }
-                num+=1;
-            }else {
-                System.out.println(s[i]);//打印匹配失败的原句
-            }
-            tmp=null;//临时变量
-        }
-		
-        System.out.println("匹配结束");
-        long time22 = System.currentTimeMillis();
-        System.out.println("执行了："+(int) ((time22 - time11))+"毫秒！");
-        System.out.println("命中："+num);
-
-        for (int i=0;i<timearr.length;i+=1) {
-            System.out.println("第"+(i*100+1)+"条时执行了："+((int)(timearr[i]-time11))+"毫秒！");
-        }
-
-        /*try {
-			Thread.sleep(67000);//为了等待VisualVM的连接，对于0.1数据，需要等68秒。0.25数据，需要等65秒。0.5数据，需要等67秒,1数据需要等待67秒
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/       
-    }
-    
-    public static Map<String, Set<Integer>> loadKeyWord2IndexFile(){
-        String ahoCorFilePath = "src/main/test/G1副本_key2index.txt";
-        SortedMap<String, Set<Integer>> key2IndexMap = new TreeMap();
-        String line;
-        try {
-            InputStreamReader isr = new InputStreamReader(new FileInputStream(ahoCorFilePath), StandardCharsets.UTF_8);
-            BufferedReader br = new BufferedReader(isr);
-            while ((line = br.readLine()) != null) {
-                Set<Integer> indexSet = new HashSet<>();
-                // 用英文冒号隔开，每个index用英文逗号隔开
-                String[] keywordAndIndex = line.split(":");
-                String key = keywordAndIndex[0];
-                String indexListStr = keywordAndIndex[1];
-                String[] indexArray = indexListStr.split(",");
-                for(String s:indexArray){
-                    if(s!=null&&isNumeric(s)){
-                        int index = Integer.parseInt(s);
-                        indexSet.add(index);
-                    }
-                }
-                key2IndexMap.put(key, indexSet);
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return key2IndexMap;
-    }
-
-    /**
-     * 判断字符串是否为数字
-     * @param str
-     * @return
-     */
-    public static boolean isNumeric(String str) {
-        for (int i = str.length(); --i >= 0; ) {
-            if (!Character.isDigit(str.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

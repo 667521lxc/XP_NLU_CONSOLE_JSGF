@@ -1,8 +1,0 @@
-#JSGF V1.0 UTF-8 en ;
-grammar Grammar;
-public <ac@set-temperature-down1!device：空调!function：温度!set-type：调低!value：2&0> = [我  | 我 实 在  | 车 里  | 还 是 ] [(有 点  | 有 一 点  ){K:a_little}] ((热  ){K:hot}) [(了  ){K:modal}];
-public <ac@set-temperature-down2!device：空调!function：温度!set-type：调低!value：4&0> = [我  | 我 实 在  | 车 里  | 还 是 ] ((太  | 好  | 很  ){K:too}) ((热  ){K:hot}) [(了  ){K:modal}];
-public <ac@set-temperature-down2!device：空调!function：温度!set-type：调低!value：4&1> = ((热  ){K:hot}) (死 我 ) [(了  ){K:modal}];
-public <ac@set-temperature-high1!device：空调!function：温度!set-type：调低!value：2&0> = [我  | 我 实 在  | 车 里  | 还 是 ] [(有 点  | 有 一 点  ){K:a_little}] ((冷  ){K:cold}) [(了  ){K:modal}];
-public <ac@set-temperature-high2!device：空调!function：温度!set-type：调高!value：4&0> = [我  | 我 实 在  | 车 里  | 还 是 ] ((太  | 好  | 很  ){K:too}) ((冷  ){K:cold}) [(了  ){K:modal}];
-public <ac@set-temperature-high2!device：空调!function：温度!set-type：调高!value：4&1> = ((冷  ){K:cold}) (死 我 ) [(了  ){K:modal}];

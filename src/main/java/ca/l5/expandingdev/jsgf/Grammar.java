@@ -12,8 +12,6 @@ import ca.l5.expandingdev.trie.PayloadTrie.PayloadTrieBuilder;
 
 public class Grammar {
     public static final String specialCharacterRegex = "[;=<>*+\\[\\]()|{} ]";
-    //public static HashMap<String,Byte> ch_dict = new HashMap<String,Byte>();
-    //public static HashMap<Byte,String> ch_dict2 = new HashMap<Byte,String>();
     public static Map<String, Short> dict = new HashMap<>();
     public static Map<Short, String> dict2 = new HashMap<>();
     public static Set<String> set = new HashSet<>();
@@ -21,17 +19,13 @@ public class Grammar {
     public static Map<String, Set<Integer>> key2IndexMap;
 
     public String name;
-    private List<Rule> rules;
-    private List<ReTags> re_tags;
-    private List<Results> results;
-    private List<Import> imports;
+    private List<Rule> rules; //返回规则
+    private List<Import> imports; //这个用处不大
     private GrammarHeader header;
 
     public Grammar() {
         header = new GrammarHeader();
         rules = new ArrayList<Rule>();
-        re_tags = new ArrayList<ReTags>();
-        results = new ArrayList<Results>();
         imports = new ArrayList<Import>();
         name = "default";
     }
@@ -39,8 +33,6 @@ public class Grammar {
     public Grammar(String n) {
         header = new GrammarHeader();
         rules = new ArrayList<Rule>();
-        re_tags = new ArrayList<ReTags>();
-        results = new ArrayList<Results>();
         imports = new ArrayList<Import>();
         name = n;
     }
@@ -636,7 +628,7 @@ public class Grammar {
                     int wp = ((Tag) tmpt).getWp();
                     int wpe = ((Tag) tmpt).getWpE();
                     ReTags retag = new ReTags(tag, wp, wpe);
-                    re_tags.add(retag);
+                    rule.re_tags.add(retag);
                 }
             }
         }
@@ -662,7 +654,7 @@ public class Grammar {
                     int wp = ((Tag) tmpt).getWp();
                     int wpe = ((Tag) tmpt).getWpE();
                     ReTags retag = new ReTags(tag, wp, wpe);
-                    re_tags.add(retag);
+                    rule.re_tags.add(retag);
                 }
             }
         }
@@ -688,14 +680,15 @@ public class Grammar {
                     int wp = ((Tag) tmpt).getWp();
                     int wpe = ((Tag) tmpt).getWpE();
                     ReTags retag = new ReTags(tag, wp, wpe);
-                    re_tags.add(retag);
+                    rule.re_tags.add(retag);
                 }
             }
         }
         return matchCount == words.length; // Must match all the words!
     }
     
-    public List<Rule> getMatchingRule(String test) throws IOException {	
+    public List<TemplateSubMatched> getMatchingRule(String test) throws IOException {	
+    	List<TemplateSubMatched> re= new ArrayList<TemplateSubMatched>();
     	// 1、执行ac自动机获取词表矩阵
         LinkedHashMap<Integer, List<ACResult>> wordListMatrix = ahoCor(test);
         /*
@@ -731,47 +724,58 @@ public class Grammar {
             System.out.println("【TemplateQueryMatcherComponent】初筛后没有需要匹配的模板");
         }
     	*/
-        List<Rule> tmpList = new ArrayList<>();
+        //List<Rule> tmpList = new ArrayList<>();//返回Rule
+        //List<List<Slot>> tmp_slot_List = new ArrayList<>();//返回槽位，List<Rule>里面每一个规则对应一个List<Slot>
         String tmp1=new String();
         String tmp2=new String();
+        //System.out.println(test);
         for (Rule r : rules) {
-        	if(ruleIndexFiltered == null || !ruleIndexFiltered.contains(r.index)) {
-        		continue;
-        	}
+        	/*模板初筛if(ruleIndexFiltered == null || !ruleIndexFiltered.contains(r.index)) {
+        		continue; 
+        	}*/
             //System.out.println(r.getRuleString());
+        	r.re_tags.clear();
+        	r.results.clear();
         	if (!r.isWild) {
                 if (matchesRule(r,test)) {
-                	/*for (int i=0;i<re_tags.size();i+=1) {//打印抽槽 **************
-                        //System.out.println(re_tags.get(i).wp+" "+re_tags.get(i).wpe);
-                        tmp1=re_tags.get(i).getString();
-                        tmp2=test.substring(2*re_tags.get(i).wp,2*re_tags.get(i).wpe-1).replaceAll(" ","");
-                        Results tmpr=new Results(tmp1,tmp2);
-                        results.add(tmpr);
+                	for (int i=0;i<r.re_tags.size();i+=1) {//打印抽槽 **************
+                        //System.out.println(r.re_tags.get(i).wp+" "+r.re_tags.get(i).wpe);
+                        tmp1=r.re_tags.get(i).getString();
+                        tmp2=test.substring(2*r.re_tags.get(i).wp,2*r.re_tags.get(i).wpe-1).replaceAll(" ","");
+                        List<Integer> ll = new ArrayList<Integer>();
+                        ll.add(r.re_tags.get(i).wp);
+                        ll.add(r.re_tags.get(i).wpe);
+                        //System.out.println(tmp1+"  "+tmp2);
+                        Slot tmpr=new Slot(tmp1, tmp2, ll);
+                        r.results.add(tmpr);
                     }
-                	for (int i=0;i<results.size();i+=1) {
-                		System.out.println(results.get(i).getString());//打印抽槽 **************
-                	}*/
-                    tmpList.add(r);
+                	List<Slot> slot_list = new ArrayList<Slot>();
+                	slot_list.addAll(r.results);
+                	TemplateSubMatched ts = new TemplateSubMatched(r,slot_list);
+                    re.add(ts);
                 }	
         	} else { //这里处理通配符，目前一句支持两个通配符
         		if (r.wl.size() == 2) {//一个通配符
             		for (int i = r.wl.get(0); i <= r.wl.get(1); i += 1) {                  		
                     	if (matchesRule_w(r, i, test)) {
-                    		/*for (int j = 0 ; j < re_tags.size(); j += 1) {//打印抽槽 **************
+                    		for (int j = 0 ; j < r.re_tags.size(); j += 1) {//打印抽槽 **************
                                 //System.out.println(re_tags.get(i).wp+" "+re_tags.get(i).wpe);
-                                int tstart = 2*re_tags.get(j).wp;
-                                int tend = 2*re_tags.get(j).wpe-1;
+                                int tstart = 2*r.re_tags.get(j).wp;
+                                int tend = 2*r.re_tags.get(j).wpe-1;
                                 if (tstart < tend) {//防止空的出现
-                                    tmp1=re_tags.get(j).getString();
+                                    tmp1=r.re_tags.get(j).getString();
                                     tmp2=test.substring(tstart,tend).replaceAll(" ","");
-                                    Results tmpr=new Results(tmp1,tmp2);
-                                    results.add(tmpr);
+                                    List<Integer> ll = new ArrayList<Integer>();
+                                    ll.add(r.re_tags.get(i).wp);
+                                    ll.add(r.re_tags.get(i).wpe);
+                                    Slot tmpr=new Slot(tmp1, tmp2, ll);
+                                    r.results.add(tmpr);
                                 }
                             }
-                        	for (int j = 0; j < results.size(); j += 1) {
-                        		System.out.println(results.get(j).getString());//打印抽槽 **************
-                        	}*/
-                    		tmpList.add(r);
+                        	List<Slot> slot_list = new ArrayList<Slot>();
+                        	slot_list.addAll(r.results);
+                        	TemplateSubMatched ts = new TemplateSubMatched(r,slot_list);
+                            re.add(ts);
                     		break;
                     	}
             		}	
@@ -784,21 +788,24 @@ public class Grammar {
                     		wl.add(i);
                     		wl.add(j);
                     		if (matchesRule_ww(r, wl, test)) {
-                    			/*for (int k = 0 ; k < re_tags.size(); k += 1) {//打印抽槽 **************
+                    			for (int k = 0 ; k < r.re_tags.size(); k += 1) {//打印抽槽 **************
                                     //System.out.println(re_tags.get(i).wp+" "+re_tags.get(i).wpe);
-                                    int tstart = 2*re_tags.get(k).wp;
-                                    int tend = 2*re_tags.get(k).wpe-1;
+                                    int tstart = 2*r.re_tags.get(k).wp;
+                                    int tend = 2*r.re_tags.get(k).wpe-1;
                                     if (tstart < tend) {//防止空的出现
-                                        tmp1=re_tags.get(k).getString();
+                                        tmp1=r.re_tags.get(k).getString();
                                         tmp2=test.substring(tstart,tend).replaceAll(" ","");
-                                        Results tmpr=new Results(tmp1,tmp2);
-                                        results.add(tmpr);	
+                                        List<Integer> ll = new ArrayList<Integer>();
+                                        ll.add(r.re_tags.get(i).wp);
+                                        ll.add(r.re_tags.get(i).wpe);
+                                        Slot tmpr=new Slot(tmp1, tmp2, ll);
+                                        r.results.add(tmpr);	
                                     }
                                 }
-                            	for (int k = 0; k < results.size(); k += 1) {
-                            		System.out.println(results.get(k).getString());//打印抽槽 **************
-                            	}*/
-                    			tmpList.add(r);
+                            	List<Slot> slot_list = new ArrayList<Slot>();
+                            	slot_list.addAll(r.results);
+                            	TemplateSubMatched ts = new TemplateSubMatched(r,slot_list);
+                                re.add(ts);
                     			iii = true;
                     			break;
                     		}		
@@ -810,44 +817,10 @@ public class Grammar {
         		}
         	}
         }
-        if (tmpList.size()!=0) {
-            return tmpList;
+        if (re.size()!=0) {
+            return re;
         }else {
             return null;
-        }
-    }
-
-	public class ReTags {
-        public String tag;
-        public int wp;
-        public int wpe;
-
-        public ReTags(String tagn, int wpn, int wpen) {
-            tag = tagn;
-            wp = wpn;
-            wpe = wpen;
-        }
-
-        public String getString() {
-            String s = "";
-            s += tag;
-            return s;
-        }
-    }
-
-    public class Results {
-        public String tag;
-        public String slot;
-
-        public Results(String tagn, String slotn) {
-            tag = tagn;
-            slot = slotn;
-        }
-
-        public String getString() {
-            String s = "";
-            s += (tag + "//" + slot);
-            return s;
         }
     }
 
@@ -1262,7 +1235,6 @@ public class Grammar {
                         //if(currentToken.contains(":")){
                         //   set.add(currentToken);
                         //}
-
                     }
                     exp.add(ttt);
                     currentToken = "";
@@ -1473,11 +1445,6 @@ public class Grammar {
         public boolean hasUnparsedChildren() {
             return false;
         }
-    }
-
-    public void clear_result() {
-        results.clear();
-        re_tags.clear();
     }
 
     /**

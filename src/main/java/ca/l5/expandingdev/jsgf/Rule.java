@@ -1,8 +1,12 @@
 package ca.l5.expandingdev.jsgf;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Rule {
+	public static List<ReTags> re_tags = new ArrayList<ReTags>();//提槽的位置信息，存储在这
+	public static List<Slot> results = new ArrayList<Slot>(); //提的槽位都在这里
+    
     public String name;
     public Expansion expansion;
     public int priority;
