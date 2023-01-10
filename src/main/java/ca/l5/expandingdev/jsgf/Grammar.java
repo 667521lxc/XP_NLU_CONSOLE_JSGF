@@ -691,7 +691,7 @@ public class Grammar {
     	List<TemplateSubMatched> re= new ArrayList<TemplateSubMatched>();
     	// 1、执行ac自动机获取词表矩阵
         LinkedHashMap<Integer, List<ACResult>> wordListMatrix = ahoCor(test);
-        /*
+        
         System.out.println("------------执行ac自动机获取词表矩阵------------");
         Iterator<Entry<Integer, List<ACResult>>> entries = wordListMatrix.entrySet().iterator();
         while (entries.hasNext()) {
@@ -701,21 +701,21 @@ public class Grammar {
             System.out.println(key + ":" + value);
         }   
         System.out.println("----------------------------------------------");
-        */
+        
         //2、获取rule对应的index，这个写到测试文件里面了Map<String, Set<Integer>> key2IndexMap = getKey2IndexMap();
 
         //3、遍历矩阵获取word list
         List<List<WordKeyBO>> wordList = getWordList(wordListMatrix);
-        /*
+        
         System.out.println("------------遍历矩阵获取word list--------------");
         for (List<WordKeyBO> wl:wordList) {
         	System.out.println(wl);
         }
         System.out.println("----------------------------------------------");
-        */
+        
         //4、调用模板初筛方法findUnionSetForWordList
         Set<Integer> ruleIndexFiltered = findUnionSetForWordList(wordList);
-        /*
+        
         System.out.println("------------调用模板初筛方法--------------");
         if(ruleIndexFiltered!=null){
             System.out.println("【TemplateQueryMatcherComponent】初筛后需要匹配的模板"+ruleIndexFiltered.size()+"条");
@@ -723,16 +723,16 @@ public class Grammar {
         }else{
             System.out.println("【TemplateQueryMatcherComponent】初筛后没有需要匹配的模板");
         }
-    	*/
+    	
         //List<Rule> tmpList = new ArrayList<>();//返回Rule
         //List<List<Slot>> tmp_slot_List = new ArrayList<>();//返回槽位，List<Rule>里面每一个规则对应一个List<Slot>
         String tmp1=new String();
         String tmp2=new String();
         //System.out.println(test);
         for (Rule r : rules) {
-        	/*模板初筛if(ruleIndexFiltered == null || !ruleIndexFiltered.contains(r.index)) {
+        	if(ruleIndexFiltered == null || !ruleIndexFiltered.contains(r.index)) {
         		continue; 
-        	}*/
+        	}
             //System.out.println(r.getRuleString());
         	r.re_tags.clear();
         	r.results.clear();
@@ -766,8 +766,8 @@ public class Grammar {
                                     tmp1=r.re_tags.get(j).getString();
                                     tmp2=test.substring(tstart,tend).replaceAll(" ","");
                                     List<Integer> ll = new ArrayList<Integer>();
-                                    ll.add(r.re_tags.get(i).wp);
-                                    ll.add(r.re_tags.get(i).wpe);
+                                    ll.add(r.re_tags.get(j).wp);
+                                    ll.add(r.re_tags.get(j).wpe);
                                     Slot tmpr=new Slot(tmp1, tmp2, ll);
                                     r.results.add(tmpr);
                                 }
@@ -796,8 +796,8 @@ public class Grammar {
                                         tmp1=r.re_tags.get(k).getString();
                                         tmp2=test.substring(tstart,tend).replaceAll(" ","");
                                         List<Integer> ll = new ArrayList<Integer>();
-                                        ll.add(r.re_tags.get(i).wp);
-                                        ll.add(r.re_tags.get(i).wpe);
+                                        ll.add(r.re_tags.get(j).wp);
+                                        ll.add(r.re_tags.get(j).wpe);
                                         Slot tmpr=new Slot(tmp1, tmp2, ll);
                                         r.results.add(tmpr);	
                                     }
@@ -1351,8 +1351,10 @@ public class Grammar {
                 			wl.add(Integer.parseInt(sl[ii].substring(ll+1)));//第二个数字
                 		}//不管怎样，这个wl列表内数据是成对出现的，也就是一定是偶数个。一般是2个或4个。
                     	grammar.addRule(new Rule(ruleName, true, wl, pri, ind, exp));
+                    //} else if (parts[1].contains("+") || parts[1].contains("*")) { //这里是正则，AC自动机放行这些模板
+                    	//System.out.println("待修改");
                     } else {
-                    	grammar.addRule(new Rule(ruleName, false, pri, ind, exp));
+                    	grammar.addRule(new Rule(ruleName, false, pri, ind, exp));	
                     }
                     ind += 1;
                 }
@@ -1388,7 +1390,7 @@ public class Grammar {
 
     public Rule getRule(String ruleName) {
         for (Rule r : rules) {
-            if (r.name.equals(ruleName)) {
+            if (r.utterance.equals(ruleName)) {
                 return r;
             }
         }
@@ -1534,7 +1536,7 @@ public class Grammar {
     }
     
 	public static HashMap<String, ArrayList<String>> ahoCor_readfile() throws IOException {
-		File file = new File("D:/CODE/AhoCor.txt");
+		File file = new File("D:/CODE/AhoCor3.txt");
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		String str;
 		String keyword = null;
@@ -1624,7 +1626,6 @@ public class Grammar {
             findWordListPath(resultList, wordListMatrix, acResult.getIndex(), cPath);
         }
     }
- 
     
     /**
     * 对于word list做初筛，缩小匹配范围
@@ -1632,68 +1633,111 @@ public class Grammar {
     * @param key2IndexMap
     * @return
     */
-   public static Set<Integer> findUnionSetForWordList(List<List<WordKeyBO>> wordList) {
-       if (wordList == null || wordList.isEmpty()) {
-           return new HashSet<>();
-       }
-       Set<Integer> indexSetForWordList = new HashSet<>();
-      // 存储所有的词
-       Set<String> wordSet = new HashSet<>();
-       // 每句话之间求并集
-       for(List<WordKeyBO> sentence: wordList){
-           // 直接取最小数目的词
-           if(sentence!=null&&!sentence.isEmpty()){
-               //long start = System.currentTimeMillis();
-               Set<Integer> sentenceIndexSet = null;
-               // 假设第一个词对应的模板数量最少
-               WordKeyBO firstWord = sentence.get(0);
-               //存储第一个word
-               wordSet.add(firstWord.getValue());               
-               Set<Integer> firstWordIndexSet = getWordIndexUnionSet(firstWord.getLabelList());
-               sentenceIndexSet = firstWordIndexSet;
-               // 遍历、获取词对应模板数量最少的
-               for(int i=1;i<sentence.size();i++){
-                   WordKeyBO nextWord = sentence.get(i);
-                // 判断接下来的word是否已经出现
-                   if(nextWord.getValue()!=null&&!wordSet.contains(nextWord.getValue())){
-                	   wordSet.add(nextWord.getValue());
-                       Set<Integer> nextWordIndexSet = getWordIndexUnionSet(nextWord.getLabelList());
-                       if(nextWordIndexSet.size()<firstWordIndexSet.size()){
-                           sentenceIndexSet = nextWordIndexSet;
-                       }
-                   }
-               }
-               //long end = System.currentTimeMillis();
-               //System.out.println("[findUnionSetForWordList]里单句中词取候选模板数量最小耗时"+(end-start)+"ms");
-               // 每句的候选集利用set.addAll方法，求句与句之间的并集
-               //long start1 = System.currentTimeMillis();
-               indexSetForWordList.addAll(sentenceIndexSet);
-               //long end1 = System.currentTimeMillis();
-               //System.out.println("[findUnionSetForWordList]里句与句之间求并集耗时"+(end1-start1)+"ms");
-           }
-       }
-       return indexSetForWordList;
-   }
+    public TreeSet<Integer> findUnionSetForWordList(List<List<WordKeyBO>> wordList) {
+        if (wordList == null || wordList.isEmpty()) {
+            return new TreeSet<>();
+        }
+        TreeSet<Integer> indexSetForWordList = new TreeSet<>();
+        // 存储每个序列的最优解词
+        Set<String> wordSet = new HashSet<>();
+        int sentenceIndex = 0;
+        // 每句话之间求并集
+        for(List<WordKeyBO> sentence: wordList){
+            // 直接取最小数目的词
+            if(sentence!=null&&!sentence.isEmpty()){
+            	if(sentenceIndex==0){
+            		//取当前序列的最优解
+            		SequenceOptimalSolution sequenceOptimalSolution = getSequenceOptimalSolution(sentence);
+                    wordSet.add(sequenceOptimalSolution.getWord());
+                    indexSetForWordList.addAll(sequenceOptimalSolution.getIndexSet());
+                }else{
+                    boolean isContain = false;
+                    for (WordKeyBO wordKeyBO : sentence) {
+                        String value = wordKeyBO.getValue();
+                        if (wordSet.contains(value)) {
+                            isContain = true;
+                            break;
+                        }
+                    }
+                    if(!isContain){
+                        //求当前序列的最优解
+                        SequenceOptimalSolution sequenceOptimalSolution = getSequenceOptimalSolution(sentence);
+                        wordSet.add(sequenceOptimalSolution.getWord());
+                        indexSetForWordList.addAll(sequenceOptimalSolution.getIndexSet());
+                    }
+                }
+            	sentenceIndex++;
+            }
+        }
+        return indexSetForWordList;
+	}
+
+     /**
+      * 计算当前序列的最优解
+      * @param sentence
+      * @param key2IndexMap
+      * @return
+      */
+     private SequenceOptimalSolution getSequenceOptimalSolution(List<WordKeyBO> sentence){
+         // 假设第一个词对应的模板数量最少
+         WordKeyBO firstWord = sentence.get(0);
+         String minIndexSetWord = firstWord.getValue();
+         Set<Integer> firstWordIndexSet = getWordIndexUnionSet(firstWord.getLabelList());
+         Set<Integer> sentenceIndexSet = firstWordIndexSet;
+         for (int i = 1; i < sentence.size(); i++) {
+             WordKeyBO nextWord = sentence.get(i);
+             Set<Integer> nextWordIndexSet = getWordIndexUnionSet(nextWord.getLabelList());
+             if (nextWordIndexSet.size() < firstWordIndexSet.size()) {
+                 sentenceIndexSet = nextWordIndexSet;
+                 minIndexSetWord = nextWord.getValue();
+             }
+         }
+         SequenceOptimalSolution re = new SequenceOptimalSolution(minIndexSetWord, sentenceIndexSet);
+         return re;
+     }
+
+     /**
+      * 对单个word，分别去对应的rule index，并求并集
+      * @param labelList
+      * @param key2IndexMap
+      * @return
+      */
+     private static Set<Integer> getWordIndexUnionSet(List<String> labelList){
+         if(labelList == null || labelList.isEmpty()){
+             return Collections.emptySet();
+         }
+         Set<Integer> set = new HashSet<>();
+         for(int i=0;i<labelList.size();i++){
+             String label = labelList.get(i);
+             // 加<>拼接为keyword
+             String keyword = "<"+label+">";
+             Set<Integer> indexSet = key2IndexMap.get(keyword);
+             if(indexSet!=null&&!indexSet.isEmpty()){
+                 set.addAll(indexSet);
+             }
+         }
+         return set;
+     }
+
+   
    /**
-    * 对单个word，分别去对应的rule index，并求并集
-    * @param labelList
-    * @param key2IndexMap
-    * @return
+    * 序列最优解
     */
-   private static Set<Integer> getWordIndexUnionSet(List<String> labelList){
-       if(labelList == null || labelList.isEmpty()){
-           return Collections.emptySet();
+   class SequenceOptimalSolution {
+       private String word; //序列最优解的词
+       private Set<Integer> indexSet; //序列最优解词对应的模板index集合
+       
+       public SequenceOptimalSolution(String w, Set<Integer> i) {
+    	   this.word = w;
+    	   this.indexSet = i;
        }
-       Set<Integer> set = new HashSet<>();
-       for(int i=0;i<labelList.size();i++){
-           String label = labelList.get(i);
-           // 加<>拼接为keyword
-           String keyword = "<"+label+">";
-           Set<Integer> indexSet = key2IndexMap.get(keyword);
-           if(indexSet!=null&&!indexSet.isEmpty()){
-               set.addAll(indexSet);
-           }
+
+       public Set<Integer> getIndexSet() {
+    	   return indexSet;
        }
-       return set;
+
+       public String getWord() {
+    	   return word;
+       }
    }
 }

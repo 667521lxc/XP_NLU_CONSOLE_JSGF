@@ -7,7 +7,7 @@ public class Rule {
 	public static List<ReTags> re_tags = new ArrayList<ReTags>();//提槽的位置信息，存储在这
 	public static List<Slot> results = new ArrayList<Slot>(); //提的槽位都在这里
     
-    public String name;
+    public String utterance;
     public Expansion expansion;
     public int priority;
     public int index;
@@ -15,7 +15,7 @@ public class Rule {
     public List<Integer> wl = null;
 
     public Rule(String n, boolean visible, List<Integer> WL, int pri, int ind, Expansion... exp) {//有通配符的构造函数
-        name = n;
+    	utterance = n;
         if (exp.length > 1) {
             expansion = new Sequence(exp);
         } else {
@@ -28,7 +28,7 @@ public class Rule {
     }
     
     public Rule(String n, boolean visible, int pri, int ind, Expansion... exp) {//没有通配符的构造函数
-        name = n;
+    	utterance = n;
         if (exp.length > 1) {
             expansion = new Sequence(exp);
         } else {
@@ -43,7 +43,7 @@ public class Rule {
         String s = "";
         s = expansion.getString();
 
-        return index + "  <" + name + "> = " + s + ";";
+        return index + "  <" + utterance + "> = " + s + ";";
     }
 
     public Expansion getChildExpansion() {

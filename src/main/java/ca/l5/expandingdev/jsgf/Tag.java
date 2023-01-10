@@ -51,7 +51,6 @@ public class Tag implements Expansion {
     @Override
     public String getString() {
         String s = childExpansion.getString();
-
         //Check to see if we need to add a grouping to this
         if (childExpansion instanceof Sequence || childExpansion instanceof AlternativeSet) {
             StringBuilder sb = new StringBuilder(s);
@@ -62,8 +61,7 @@ public class Tag implements Expansion {
 
         for (String t : contents) {
             s += " {" + t + "}";
-        }
-        
+        }       
         //s = s + " " + wordposition;
         return s;
     }

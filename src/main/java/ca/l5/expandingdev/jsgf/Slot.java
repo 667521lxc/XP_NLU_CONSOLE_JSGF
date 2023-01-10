@@ -9,6 +9,11 @@ public class Slot {
 	private Object value;//解析后的值
 	private String type;
 	private List<Integer> pos;//槽位对应的位置信息
+
+	public Slot(String n, String r) {
+		this.name = n;
+		this.rawValue = r;
+	}
 	
 	public Slot(String n, String r, List<Integer> p) {
 		this.name = n;
@@ -25,6 +30,10 @@ public class Slot {
 	}
 	
 	public String toString() {
-		return this.name + "//" + this.rawValue+ "//" + this.pos.get(0)+ "//" + this.pos.get(1);
+		if (this.pos != null) {
+			return this.name + "//" + this.rawValue+ "//" + this.pos.get(0)+ "//" + this.pos.get(1);	
+		} else {
+			return this.name + "//" + this.rawValue;
+		}
 	}
 }

@@ -5,6 +5,7 @@ import ca.l5.expandingdev.jsgf.KleeneStar;
 import ca.l5.expandingdev.jsgf.OptionalGrouping;
 import ca.l5.expandingdev.jsgf.PlusOperator;
 import ca.l5.expandingdev.jsgf.RequiredGrouping;
+import ca.l5.expandingdev.jsgf.Rule;
 import ca.l5.expandingdev.jsgf.Sequence;
 import ca.l5.expandingdev.jsgf.Slot;
 import ca.l5.expandingdev.jsgf.Tag;
@@ -43,26 +44,17 @@ public class JSGFTest3 {
 		for (int i=0;i<rules.size();i+=1) {
 			//printTreeHorizontal(rules.get(i).getChildExpansion());
 		}*/
-		/*
-        String testQuery = "我 实 在 太 热 了";
-        Pair<List, List> return_result = testGram.getMatchingRule(testQuery);
-        List<Rule> ruleList = return_result.getFirst();
-        List<List<Slot>> slotList = return_result.getSecond();
-        if(ruleList!=null && ruleList.size()>0){
-            for(Rule rule:ruleList){
-                System.out.println(rule.getRuleString());
+		
+        String testQuery = "冷 死 我 了";
+        List<TemplateSubMatched> return_results = testGram.getMatchingRule(testQuery);
+        if(return_results != null && return_results.size()>0){
+            for(TemplateSubMatched ts:return_results){
+            	Rule rule = ts.getUtterance();
+                List<Slot> slots = ts.getSlots();
+                System.out.println(rule.getRuleString()+" "+slots);
             }
         }else{
-            System.out.println("未命中任何rule");
-        }
-        if(slotList!=null && slotList.size()>0){
-            for(List<Slot> slotl:slotList){
-            	for(Slot slot:slotl){
-                    System.out.println(slot.getSlot());      		
-            	}
-            }
-        }else{
-            System.out.println("没有槽位信息");
+        	System.out.println(testQuery);//打印匹配失败的原句
         }
 
         //Rule rule1 = testGram.getRules().get(0);
@@ -77,9 +69,9 @@ public class JSGFTest3 {
 			e.printStackTrace();
 		}*/
         
-        
+        /*
         long[] timearr=new long[11];
-        String[] sentences=readfile("src/main/test/sentence_test新模板.txt").split("\n");
+        String[] sentences=readfile("src/main/test/sentence_test0排序.txt").split("\n");
         String[] t= new String[2];
         String[] s= new String[sentences.length];
         for(int i=0;i<sentences.length;i++) {
@@ -91,13 +83,12 @@ public class JSGFTest3 {
         int num = 0;
         //循环测试文件里的句子
         for(int i=0;i<sentences.length;i++) {
-        	System.out.println(s[i]);
         	List<TemplateSubMatched> return_results = testGram.getMatchingRule(s[i]);
         	if(return_results != null && return_results.size()>0){
                 for(TemplateSubMatched ts:return_results){
-                	String rule = ts.getUtterance();
-                    List<Slot> slots = ts.getSlots();
-                    System.out.println(rule+" "+slots);
+            		Rule rule = ts.getUtterance();
+                	List<Slot> slots = ts.getSlots();
+                	System.out.println(rule.getRuleString()+" "+slots);
                 }
                 num+=1;
             }else{
@@ -144,7 +135,7 @@ public class JSGFTest3 {
 
     
     public static Map<String, Set<Integer>> loadKeyWord2IndexFile(){
-        String ahoCorFilePath = "src/main/test/G1副本_key2index.txt";
+        String ahoCorFilePath = "src/main/test/G1副本_key2index2.txt";
         SortedMap<String, Set<Integer>> key2IndexMap = new TreeMap();
         String line;
         try {
